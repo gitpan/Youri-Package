@@ -1,4 +1,4 @@
-# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package/RPM/Test.pm 2197 2007-02-17T21:17:28.014197Z guillomovitch  $
+# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package/RPM/Test.pm 2262 2007-03-08T20:44:26.937219Z guillomovitch  $
 package Youri::Package::RPM::Test;
 
 =head1 NAME
@@ -196,8 +196,8 @@ sub get_canonical_name {
     return $self->{_tags}->{name}
         if $self->{_tags}->{arch} eq 'src';
 
-    # otherwise return undef if sourcerpm is not defined
-    return
+    # otherwise return name if sourcerpm is not defined
+    return $self->{_tags}->{name}
        if ! $self->{_tags}->{sourcerpm};
 
     # otherwise source package name

@@ -1,4 +1,4 @@
-# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package.pm 2255 2007-03-07T21:11:46.257166Z guillomovitch  $
+# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package.pm 2324 2007-03-22T20:39:52.671564Z guillomovitch  $
 package Youri::Package;
 
 =head1 NAME
@@ -14,7 +14,7 @@ This abstract class defines Youri::Package interface.
 use Carp;
 use strict;
 use warnings;
-use version; our $VERSION = qv('0.1.0');
+use version; our $VERSION = qv('0.1.1');
 
 =head1 CLASS METHODS
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: /mirror/youri/soft/Package/trunk/t/test.t 2256 2007-03-07T21:18:27.856564Z guillomovitch  $
+# $Id: /mirror/youri/soft/Package/trunk/t/test.t 2312 2007-03-22T13:29:57.098477Z guillomovitch  $
 
 use Test::More;
 use Test::Exception;
@@ -537,9 +537,9 @@ foreach my $class (@classes) {
         system('cp', $file, $temp_dir);
         $package = $class->new(file => "$temp_dir/$rpm");
 
-        dies_ok {
+        throws_ok {
             $package->sign('Youri', "$dir/gpghome", 'Youri sux')
-        } 'signing with wong key';
+        } qr/^Signature error:/, 'signing with wrong key';
 
         lives_ok {
             $package->sign('Youri', "$dir/gpghome", 'Youri rulez')

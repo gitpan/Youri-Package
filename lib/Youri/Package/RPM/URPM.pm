@@ -1,4 +1,4 @@
-# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package/RPM/URPM.pm 2174 2007-02-12T21:57:29.337053Z guillomovitch  $
+# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package/RPM/URPM.pm 2307 2007-03-22T11:45:14.574394Z guillomovitch  $
 package Youri::Package::RPM::URPM;
 
 =head1 NAME
@@ -369,6 +369,7 @@ sub sign {
 
     my $command =
         'LC_ALL=C rpm --resign ' . $self->{_file} .
+        ' --define "_signature gpg"' .
         ' --define "_gpg_name ' . $name . '"' .
         ' --define "_gpg_path ' . $path . '"';
     my $expect = Expect->spawn($command)
@@ -376,7 +377,8 @@ sub sign {
     my @log;
     $expect->log_stdout(0);
     $expect->log_file(sub { push(@log, $_[0]); });
-    $expect->expect(20, -re => 'Enter pass phrase:');
+    $expect->expect(10, 'Enter pass phrase:')
+        or croak "Unexpected output: $log[-1]\n";
     $expect->send("$passphrase\n");
 
     $expect->soft_close();

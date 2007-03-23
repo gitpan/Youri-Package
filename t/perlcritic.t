@@ -1,25 +1,14 @@
 #!/usr/bin/perl
-# $Id: /mirror/youri/soft/check/trunk/t/perlcritic.t 1412 2006-12-12T21:29:04.312821Z nanardon  $
+# $Id: /mirror/youri/soft/Package/trunk/t/perlcritic.t 2313 2007-03-22T13:38:55.448023Z guillomovitch  $
 
 use strict;
 use warnings;
 use Test::More;
 
-if (!$ENV{TEST_AUTHOR}) {
-    plan(
-        skip_all => 'Author test. Set $ENV{TEST_AUTHOR} to a true value to run.'
-    );
-}
+eval 'use Test::Perl::Critic';
+plan(skip_all => 'Test::Perl::Critic required, skipping') if $@;
 
-eval {
-    require Test::Perl::Critic;
-};
+plan(skip_all => 'Author test, set $ENV{TEST_AUTHOR} to a true value to run')
+    unless $ENV{TEST_AUTHOR};
 
-if ($@) {
-    plan(
-        skip_all => 'Test::Perl::Critic not installed, skipping'
-    );
-}
-
-Test::Perl::Critic->import();
 all_critic_ok();

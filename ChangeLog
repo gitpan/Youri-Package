@@ -1,2 +1,9 @@
+2007-03-22 Guillaume Rousse <guillomovitch@zarb.org> 0.1.1
+	* Youri::Package::RPM::URPM:
+	    - fix a missing rpm macro in sign() method
+	* Youri::Package::RPM::Test:
+	    - fix get_canonical() method when source package is unknown
+	* test suite enhancements
+
 2007-03-05 Guillaume Rousse <guillomovitch@zarb.org> 0.1.0
 	* initial release

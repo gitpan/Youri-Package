@@ -1,14 +1,13 @@
 #!/usr/bin/perl
-# $Id$
+# $Id: /mirror/youri/soft/Package/trunk/t/pod-coverage.t 2313 2007-03-22T13:38:55.448023Z guillomovitch  $
 
+use strict;
+use warnings;
 use Test::More;
-eval {
-    require Test::Pod::Coverage;
-    import Test::Pod::Coverage;
-};
-plan(skip_all => 'Test::Pod::Coverage not installed; skipping') if $@;
-plan(skip_all => 'Minimal Test::Pod::Coverage version 1.04 required; skipping')
-    unless $Test::Pod::Coverage::VERSION >= 1.04;
+
+eval "use Test::Pod::Coverage 1.04";
+plan(skip_all => 'Test::Pod::Coverage >= 1.04 required, skipping') if $@;
+
 all_pod_coverage_ok(
     { coverage_class => 'Pod::Coverage::CountParents' }
 );
