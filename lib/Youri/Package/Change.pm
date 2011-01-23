@@ -1,4 +1,4 @@
-# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package/Change.pm 2208 2007-02-18T21:10:00.945442Z guillomovitch  $
+# $Id: Change.pm 1484 2007-02-18 21:10:00Z guillomovitch $
 package Youri::Package::Change;
 
 =head1 NAME

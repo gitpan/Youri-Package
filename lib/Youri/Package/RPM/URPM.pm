@@ -1,4 +1,4 @@
-# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package/RPM/URPM.pm 2307 2007-03-22T11:45:14.574394Z guillomovitch  $
+# $Id: URPM.pm 2288 2011-01-22 11:33:51Z guillomovitch $
 package Youri::Package::RPM::URPM;
 
 =head1 NAME
@@ -219,6 +219,18 @@ sub get_canonical_name {
     }
 }
 
+sub get_canonical_revision {
+    my ($self) = @_;
+    croak "Not a class method" unless ref $self;
+
+    if ($self->{_header}->arch() eq 'src') {
+       return $self->{_header}->get_revision();
+    } else {
+       $self->{_header}->sourcerpm() =~ /^\S+-([^-]+-[^-]+)\.src\.rpm$/;
+       return $1;
+    }
+}
+
 sub get_tag {
     my ($self, $tag) = @_;
     croak "Not a class method" unless ref $self;
@@ -279,10 +291,12 @@ sub get_files {
     croak "Not a class method" unless ref $self;
 
     my @modes   = $self->{_header}->files_mode();
-    my @md5sums = $self->{_header}->files_md5sum();
+    my @digests = version->parse($URPM::VERSION) < version->parse("4.0.0") ?
+        $self->{_header}->files_md5sum() :
+        $self->{_header}->files_digest() ;
 
     return map {
-        Youri::Package::File->new($_, shift @modes, shift @md5sums)
+        Youri::Package::File->new($_, shift @modes, shift @digests)
     } $self->{_header}->files();
 }
 
@@ -290,7 +304,7 @@ sub get_gpg_key {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
     
-    my $signature = $self->{_header}->queryformat('%{SIGGPG:pgpsig}');
+    my $signature = $self->{_header}->queryformat('%{DSAHEADER:pgpsig}');
     return if $signature eq '(not a blob)';
     my $key_id = (split(/\s+/, $signature))[-1];
     return substr($key_id, 8);

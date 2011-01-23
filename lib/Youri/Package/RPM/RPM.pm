@@ -1,22 +1,23 @@
-# $Id: RPM4.pm 2291 2011-01-22 12:01:06Z guillomovitch $
-package Youri::Package::RPM::RPM4;
+# $Id: RPM.pm 2309 2011-01-22 12:50:23Z guillomovitch $
+package Youri::Package::RPM::RPM;
 
 =head1 NAME
 
-Youri::Package::RPM::RPM4 - RPM4-based rpm package implementation
+Youri::Package::RPM::RPM - RPM-based rpm package implementation
 
 =head1 DESCRIPTION
 
-This is an RPM4-based L<Youri::Package> implementation for rpm.
+This is an RPM-based L<Youri::Package> implementation for rpm.
 
 =cut
 
 use strict;
 use warnings;
 use Carp;
-use RPM4;
-use RPM4::Header;
-use RPM4::Sign;
+use RPM;
+use RPM::Constant;
+use RPM::Header;
+use RPM::Sign;
 use File::Spec;
 use Scalar::Util qw/refaddr blessed/;
 use Youri::Package::Relationship;
@@ -28,11 +29,17 @@ use overload
     '0+'     => '_to_number',
     fallback => 1;
 
+# patch RPM::Header on the fly, for sake of compatibility
+*RPM::Header::queryformat = sub {
+    my $self = shift;
+    return $self->(@_);
+};
+
 =head1 CLASS METHODS
 
 =head2 new(%args)
 
-Creates and returns a new Youri::Package::RPM::RPM4 object.
+Creates and returns a new Youri::Package::RPM::RPM object.
 
 Specific parameters:
 
@@ -44,7 +51,7 @@ Path of file to use for creating this package.
 
 =item header $header
 
-L<RPM4::Header> object to use for creating this package.
+L<RPM::Header> object to use for creating this package.
 
 =back
 
@@ -59,7 +66,7 @@ sub _init {
             croak "undefined header"
                 unless $options{header};
             croak "invalid header"
-                unless $options{header}->isa('RPM4::Header');
+                unless $options{header}->isa('RPM::Header');
             $header = $options{header};
             last HEADER;
         }
@@ -71,7 +78,7 @@ sub _init {
                 unless -f $options{file};
             croak "non-readable file $options{file}"
                 unless -r $options{file};
-            $header = RPM4::Header->new($options{file});
+            $header = rpm2header($options{file});
             croak "Can't get header from file $options{file}" if (!$header); 
 
             last HEADER;
@@ -87,7 +94,7 @@ sub _init {
 sub compare_revisions {
     my ($class, $revision1, $revision2) = @_;
 
-    return RPM4::rpmvercmp($revision1, $revision2);
+    return RPM::rpmvercmp($revision1, $revision2);
 }
 
 sub _depsense2flag {
@@ -104,48 +111,60 @@ sub check_ranges_compatibility {
     my @deps1 = ('', split(/ /, $range1));
     my @deps2 = ('', split(/ /, $range2));
     $deps1[1] = _depsense2flag($range1); 
-    $deps2[1] = _depsense2flag($range2); 
-    my $dep1 = RPM4::Header::Dependencies->new(
+    $deps2[1] = _depsense2flag($range2);
+
+    my $dep1 = RPM::Dependencies->create(
         "PROVIDENAME",
-        \@deps1,
+	$class->get_name(),
+        $deps1[1],
+	$deps1[2],
     );
-    my $dep2 = RPM4::Header::Dependencies->new(
+    my $dep2 = RPM::Dependencies->create(
         "PROVIDENAME",
-        \@deps2,
+	$class->get_name(),
+        $deps2[1],
+	$deps2[2],
     );
 
     return $dep1->overlap($dep2);
 }
 
 sub set_verbosity {
-    return RPM4::setverbosity($_[1])
+    return RPM::setverbosity($_[1]);
 }
 
 sub install_srpm {
-    return RPM4::installsrpm($_[1]);
+    return RPM::installsrpm($_[1]);
 }
 
-sub add_macro {
-    return RPM4::add_macro($_[1]);
+# RPM unfortunatly export this subroutine as a function
+# with a defined prototype morevoer
+{
+    no warnings 'redefine';
+    sub add_macro($) { ## no critic (SubroutinePrototypes)
+        return RPM::add_macro($_[1]);
+    }
 }
 
 sub expand_macro {
-    return RPM4::expand($_[1]);
+    return RPM::expand_macro($_[1]);
+
 }
 
 sub new_header {
-    shift @_;
-    return RPM4::Header->new(@_);
+    return RPM::Header::rpm2header($_[1]);
 }
 
 sub new_spec {
+    RPM::Spec->require();
     shift @_;
-    return RPM4::Spec->new(@_);
+    return RPM::Spec->new(@_);
 }
 
 sub new_transaction {
+    RPM::Transaction->require();
     shift @_;
-    return RPM4::Transaction->new(@_);
+    return RPM::Transaction->new(@_);
 }
 
 sub get_name {
@@ -173,14 +192,14 @@ sub get_revision {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
 
-    return $self->{_header}->queryformat('%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}');
+    return $self->{_header}->tagformat('%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}');
 }
 
 sub get_file_name {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
 
-    return $self->{_header}->queryformat('%{NAME}-%{VERSION}-%{RELEASE}.%|SOURCERPM?{%{ARCH}}:{src}|.rpm');
+    return $self->{_header}->tagformat('%{NAME}-%{VERSION}-%{RELEASE}.%|SOURCERPM?{%{ARCH}}:{src}|.rpm');
 }
 
 
@@ -188,7 +207,7 @@ sub get_arch {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
 
-    return $self->{_header}->queryformat('%|SOURCERPM?{%{ARCH}}:{src}|');
+    return $self->{_header}->tagformat('%|SOURCERPM?{%{ARCH}}:{src}|');
 }
 
 sub get_url {
@@ -265,14 +284,6 @@ sub get_canonical_name {
     return $1;
 }
 
-sub get_canonical_revision {
-    my ($self) = @_;
-    croak "Not a class method" unless ref $self;
-
-    $self->{_header}->sourcerpmname() =~ /^\S+-([^-]+-[^-])+\.src\.rpm$/;
-    return $1;
-}
-
 sub get_tag {
     my ($self, $tag) = @_;
     croak "Not a class method" unless ref $self;
@@ -283,13 +294,13 @@ sub get_tag {
 
 sub _get_dependencies {
     my ($self, $type) = @_;
-    my $deps = $self->{_header}->dep($type);
+    my $deps = $self->{_header}->dependencies($type);
     my @depslist;
     if ($deps) {
         $deps->init();
-        while ($deps->next() >= 0) {
-            my (undef, $name, $operator, $revision) = $deps->info();
-            next if $name =~ m/^rpmlib\(/;       # internal rpmlib dep
+        while ($deps->next()) {
+            my (undef, $name, $operator, $revision) = $deps->__info();
+	    next if $deps->flags & getvalue("rpmsenseflags", "RPMLIB");
             $operator = '==' if $operator eq '='; # rpm to URPM syntax
             push(@depslist, Youri::Package::Relationship->new(
                 $name,
@@ -336,19 +347,17 @@ sub get_files {
     my @fileslist;
     if ($files) {
         $files->init();
-        while ($files->next() >= 0) {
+        while ($files->next()) {
             # convert signed int to unsigned int
             my $smode = $files->mode();
             my $umode;
             for my $i (0..15) {
                 $umode |= $smode & (1 << $i);
             }
-            my $md5 = $files->md5();
-            $md5 = '' if !$md5 || $md5 eq '00000000000000000000000000000000';
             push(@fileslist, Youri::Package::File->new(
                 $files->filename(),
                 $umode,
-                $md5
+                $files->digest() || ''
             ));
         }
     }
@@ -359,7 +368,7 @@ sub get_gpg_key {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
     
-    my $signature = $self->{_header}->queryformat('%{SIGGPG:pgpsig}');
+    my $signature = $self->{_header}->tagformat('%{DSAHEADER:pgpsig}');
     return if $signature eq '(not a blob)';
     my $key_id = (split(/\s+/, $signature))[-1];
     return substr($key_id, 8);
@@ -394,14 +403,14 @@ sub as_string {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
 
-    return $self->{_header}->fullname();
+    return $self->{_header}->tag('nvra');
 }
 
 sub as_formated_string {
     my ($self, $format) = @_;
     croak "Not a class method" unless ref $self;
 
-    return $self->{_header}->queryformat($format);
+    return $self->{_header}->tagformat($format);
 }
 
 sub _to_number {
@@ -436,7 +445,7 @@ sub sign {
     croak "Unsignable package, parent directory is read-only"
         unless -w $parent;
 
-    my $sign = RPM4::Sign->new(
+    my $sign = RPM::Sign->new(
         name => $name,
         path => $path,
     );

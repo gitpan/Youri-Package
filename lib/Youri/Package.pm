@@ -1,4 +1,4 @@
-# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package.pm 2324 2007-03-22T20:39:52.671564Z guillomovitch  $
+# $Id: Package.pm 2307 2011-01-22 12:46:41Z guillomovitch $
 package Youri::Package;
 
 =head1 NAME
@@ -14,7 +14,7 @@ This abstract class defines Youri::Package interface.
 use Carp;
 use strict;
 use warnings;
-use version; our $VERSION = qv('0.1.1');
+use version; our $VERSION = qv('0.2.0');
 
 =head1 CLASS METHODS
 
@@ -161,6 +161,11 @@ Returns the value of tag $tag of this package.
 =head2 get_canonical_name()
 
 Returns the canonical name of this package, shared by its multiple components,
+usually the one from the source package.
+
+=head2 get_canonical_revision()
+
+Returns the canonical revision of this package, shared by its multiple components,
 usually the one from the source package.
 
 =head2 get_requires()

@@ -1,4 +1,4 @@
-# $Id: /mirror/youri/soft/Package/trunk/lib/Youri/Package/RPM/Test.pm 2262 2007-03-08T20:44:26.937219Z guillomovitch  $
+# $Id: Test.pm 2276 2011-01-22 10:21:48Z guillomovitch $
 package Youri::Package::RPM::Test;
 
 =head1 NAME
@@ -18,6 +18,7 @@ use File::Basename;
 use Carp;
 use URPM;
 use base 'Youri::Package::RPM';
+use feature qw(switch);
 use overload
     '""'     => 'as_string',
     '0+'     => '_to_number',
@@ -110,13 +111,27 @@ sub _init {
         croak "non-readable file $options{file}"
             unless -r $options{file};
         my $filename = basename($options{file});
-        croak "non-compliant filename $filename"
-            unless $filename =~/^([\w-]+)-([^-]+)-([^-]+)\.(\w+)\.rpm$/;
-        $self->{_tags}->{name} = $1;
-        $self->{_tags}->{version} = $2;
-        $self->{_tags}->{release} = $3;
-        $self->{_tags}->{arch} = $4;
-        $self->{_file} = $options{file};
+        given ($filename) {
+            when (/^([\w-]+)-([^-]+)-([^-]+)\.(\w+)\.rpm$/) {
+                # rpm4 style package, with combined dist suffix and release
+                $self->{_tags}->{name} = $1;
+                $self->{_tags}->{version} = $2;
+                $self->{_tags}->{release} = $3;
+                $self->{_tags}->{arch} = $4;
+                $self->{_file} = $options{file};
+            }
+            when (/^([\w-]+)-([^-]+)-([^-]+)-([^-]+)\.(\w+)\.rpm$/) {
+                # rpm5 style package, with distinct dist suffix and release
+                $self->{_tags}->{name} = $1;
+                $self->{_tags}->{version} = $2;
+                $self->{_tags}->{release} = $3;
+                $self->{_tags}->{arch} = $5;
+                $self->{_file} = $options{file};
+            }
+            default {
+                croak "non-compliant filename $filename";
+            }
+        }
     }
 
     $self->{_requires}  = $options{requires};

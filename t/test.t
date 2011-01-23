@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: /mirror/youri/soft/Package/trunk/t/test.t 2312 2007-03-22T13:29:57.098477Z guillomovitch  $
+# $Id: test.t 2289 2011-01-22 11:34:10Z guillomovitch $
 
 use Test::More;
 use Test::Exception;
@@ -363,9 +363,11 @@ my $last_change_text_items = [
 
 my @classes = qw/
     Youri::Package::RPM::URPM
-    Youri::Package::RPM::RPM4
     Youri::Package::RPM::Test
 /;
+push @classes, 'Youri::Package::RPM::RPM4' if RPM4->require();
+push @classes, 'Youri::Package::RPM::RPM' if RPM->require();
+
 my $dir      = dirname($0);
 my $rpm      = 'cowsay-3.03-11mdv2007.0.noarch.rpm';
 my ($old_rpm)  = Youri::Package::RPM::Generator->new(tags => {
@@ -532,6 +534,8 @@ foreach my $class (@classes) {
             if $class eq 'Youri::Package::RPM::Test';
         skip "rpm4 has no error control for signature", 3
             if $class eq 'Youri::Package::RPM::RPM4';
+        skip "rpm has no error control for signature", 3
+            if $class eq 'Youri::Package::RPM::RPM';
 
         # signature test
         system('cp', $file, $temp_dir);
