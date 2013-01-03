@@ -1,4 +1,4 @@
-# $Id: RPM.pm 2370 2013-01-03 19:26:49Z guillomovitch $
+# $Id: RPM.pm 2382 2013-01-03 20:22:33Z guillomovitch $
 package Youri::Package::RPM::RPM;
 
 =head1 NAME
@@ -310,6 +310,7 @@ sub _get_dependencies {
         $deps->init();
         while ($deps->next()) {
             my (undef, $name, $operator, $revision) = $deps->__info();
+            ## no critic (ProhibitBitwise)
 	    next if $deps->flags & getvalue("rpmsenseflags", "RPMLIB");
             $operator = '==' if $operator eq '='; # rpm to URPM syntax
             push(@depslist, Youri::Package::Relationship->new(
@@ -362,7 +363,7 @@ sub get_files {
             my $smode = $files->mode();
             my $umode;
             for my $i (0..15) {
-                $umode |= $smode & (1 << $i);
+                $umode |= $smode & (1 << $i); ## no critic (ProhibitBitwise)
             }
             push(@fileslist, Youri::Package::File->new(
                 $files->filename(),

@@ -1,4 +1,4 @@
-# $Id: RPM.pm 2328 2011-01-29 15:26:26Z guillomovitch $
+# $Id: RPM.pm 2391 2013-01-03 20:53:57Z guillomovitch $
 package Youri::Package::RPM;
 
 =head1 NAME
@@ -15,7 +15,7 @@ implementation.
 use strict;
 use warnings;
 use base 'Youri::Package';
-use version; our $VERSION = qv('0.2.0');
+use version; our $VERSION = qv('0.2.1');
 use Carp;
 use UNIVERSAL::require;
 
@@ -141,7 +141,13 @@ sub is_debug {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
 
-    return $self->get_name() =~ /-debug$/;
+    my $name = $self->get_name();
+    my $group = $self->get_tag('group');
+
+    # debug packages names must end in -debug or -debuginfo
+    return 
+        $group eq 'Development/Debug' &&
+        ($name =~ /-debug$/ || $name =~ /-debuginfo$/);
 }
 
 1;

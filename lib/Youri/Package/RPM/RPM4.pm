@@ -1,4 +1,4 @@
-# $Id: RPM4.pm 2370 2013-01-03 19:26:49Z guillomovitch $
+# $Id: RPM4.pm 2382 2013-01-03 20:22:33Z guillomovitch $
 package Youri::Package::RPM::RPM4;
 
 =head1 NAME
@@ -343,7 +343,7 @@ sub get_files {
             my $smode = $files->mode();
             my $umode;
             for my $i (0..15) {
-                $umode |= $smode & (1 << $i);
+                $umode |= $smode & (1 << $i); ## no critic (ProhibitBitwise)
             }
             my $md5 = $files->md5();
             $md5 = '' if !$md5 || $md5 eq '00000000000000000000000000000000';

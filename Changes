@@ -1,3 +1,13 @@
+2013-01-03 Guillaume Rousse <guillomovitch@zarb.org> 0.2.4
+	* Youri::Package::RPM:
+	    - recognize -debuginfo as debug packages too
+
+2013-01-03 Guillaume Rousse <guillomovitch@zarb.org> 0.2.3
+	* minor code cleanups
+	* Youri::Package::RPM::URPM:
+	    - revert changes introduced to support mandriva-specific URPM
+	      changes
+
 2011-01-30 Guillaume Rousse <guillomovitch@zarb.org> 0.2.2
 	* Youri::Package::RPM::RPM::RPM:
 	    - fix tagformat wrapper method

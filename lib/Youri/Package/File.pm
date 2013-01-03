@@ -1,4 +1,4 @@
-# $Id: File.pm 1462 2007-02-12 20:56:03Z guillomovitch $
+# $Id: File.pm 2382 2013-01-03 20:22:33Z guillomovitch $
 package Youri::Package::File;
 
 =head1 NAME
@@ -89,6 +89,7 @@ sub is_directory {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
 
+    ## no critic (ProhibitBitwise)
     return ($self->[MODE] & MODE_MASK) == MODE_DIR;
 }
 
