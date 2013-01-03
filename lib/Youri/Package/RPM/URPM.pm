@@ -1,4 +1,4 @@
-# $Id: URPM.pm 2288 2011-01-22 11:33:51Z guillomovitch $
+# $Id: URPM.pm 2370 2013-01-03 19:26:49Z guillomovitch $
 package Youri::Package::RPM::URPM;
 
 =head1 NAME
@@ -16,19 +16,22 @@ interface.
 
 use strict;
 use warnings;
-use Carp;
-use URPM;
-use File::Spec;
-use Expect;
-use Scalar::Util qw/refaddr blessed/;
-use Youri::Package::Relationship;
-use Youri::Package::File;
-use Youri::Package::Change;
 use base 'Youri::Package::RPM';
 use overload
     '""'     => 'as_string',
     '0+'     => '_to_number',
     fallback => 1;
+
+use Carp;
+use English qw(-no_match_vars);
+use Expect;
+use File::Spec;
+use Scalar::Util qw/refaddr blessed/;
+use URPM;
+
+use Youri::Package::Change;
+use Youri::Package::File;
+use Youri::Package::Relationship;
 
 =head1 CLASS METHODS
 
@@ -291,12 +294,10 @@ sub get_files {
     croak "Not a class method" unless ref $self;
 
     my @modes   = $self->{_header}->files_mode();
-    my @digests = version->parse($URPM::VERSION) < version->parse("4.0.0") ?
-        $self->{_header}->files_md5sum() :
-        $self->{_header}->files_digest() ;
+    my @md5sums = $self->{_header}->files_md5sum();
 
     return map {
-        Youri::Package::File->new($_, shift @modes, shift @digests)
+        Youri::Package::File->new($_, shift @modes, shift @md5sums)
     } $self->{_header}->files();
 }
 
@@ -304,7 +305,7 @@ sub get_gpg_key {
     my ($self) = @_;
     croak "Not a class method" unless ref $self;
     
-    my $signature = $self->{_header}->queryformat('%{DSAHEADER:pgpsig}');
+    my $signature = $self->{_header}->queryformat('%{SIGGPG:pgpsig}');
     return if $signature eq '(not a blob)';
     my $key_id = (split(/\s+/, $signature))[-1];
     return substr($key_id, 8);
@@ -387,7 +388,7 @@ sub sign {
         ' --define "_gpg_name ' . $name . '"' .
         ' --define "_gpg_path ' . $path . '"';
     my $expect = Expect->spawn($command)
-        or croak "Couldn't spawn command $command: $!\n";
+        or croak "Couldn't spawn command $command: $ERRNO\n";
     my @log;
     $expect->log_stdout(0);
     $expect->log_file(sub { push(@log, $_[0]); });

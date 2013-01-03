@@ -1,13 +1,17 @@
 #!/usr/bin/perl
-# $Id: test.t 2289 2011-01-22 11:34:10Z guillomovitch $
+# $Id: test.t 2370 2013-01-03 19:26:49Z guillomovitch $
 
+use strict;
+
+use File::Basename;
+use File::Copy;
+use File::Temp qw/tempdir/;
+use File::Which;
 use Test::More;
 use Test::Exception;
-use File::Temp qw/tempdir/;
-use File::Basename;
 use UNIVERSAL::require;
+
 use Youri::Package::RPM::Generator;
-use strict;
 
 # expected results
 my $requires = [
@@ -388,7 +392,7 @@ plan(tests => 49 * scalar @classes);
 foreach my $class (@classes) {
     $class->require();
 
-    my $temp_dir  = tempdir(CLEANUP => 1);
+    my $temp_dir  = tempdir(CLEANUP => $ENV{TEST_DEBUG} ? 0 : 1);
     my $file      = "$dir/$rpm";
     my $old_file  = "$old_rpm";
     my $new_file  = "$new_rpm";
@@ -536,9 +540,11 @@ foreach my $class (@classes) {
             if $class eq 'Youri::Package::RPM::RPM4';
         skip "rpm has no error control for signature", 3
             if $class eq 'Youri::Package::RPM::RPM';
+        skip "rpmsign not available", 3
+            if ! which("rpmsign");
 
         # signature test
-        system('cp', $file, $temp_dir);
+        copy($file, $temp_dir);
         $package = $class->new(file => "$temp_dir/$rpm");
 
         throws_ok {

@@ -1,4 +1,4 @@
-# $Id: RPM.pm 2309 2011-01-22 12:50:23Z guillomovitch $
+# $Id: RPM.pm 2370 2013-01-03 19:26:49Z guillomovitch $
 package Youri::Package::RPM::RPM;
 
 =head1 NAME
@@ -13,26 +13,29 @@ This is an RPM-based L<Youri::Package> implementation for rpm.
 
 use strict;
 use warnings;
-use Carp;
-use RPM;
-use RPM::Constant;
-use RPM::Header;
-use RPM::Sign;
-use File::Spec;
-use Scalar::Util qw/refaddr blessed/;
-use Youri::Package::Relationship;
-use Youri::Package::File;
-use Youri::Package::Change;
 use base 'Youri::Package::RPM';
 use overload
     '""'     => 'as_string',
     '0+'     => '_to_number',
     fallback => 1;
 
+use Carp;
+use File::Path qw/remove_tree/;
+use File::Spec;
+use RPM;
+use RPM::Constant;
+use RPM::Header;
+use RPM::Sign;
+use Scalar::Util qw/refaddr blessed/;
+
+use Youri::Package::Change;
+use Youri::Package::File;
+use Youri::Package::Relationship;
+
 # patch RPM::Header on the fly, for sake of compatibility
 *RPM::Header::queryformat = sub {
     my $self = shift;
-    return $self->(@_);
+    return $self->tagformat(@_);
 };
 
 =head1 CLASS METHODS
@@ -134,7 +137,14 @@ sub set_verbosity {
 }
 
 sub install_srpm {
-    return RPM::installsrpm($_[1]);
+    my @results = RPM::installsrpm($_[1]);
+    # RPM create all directories, instead of just the needed ones
+    remove_tree(
+        RPM::expand_macro('%_builddir'),
+        RPM::expand_macro('%_rpmdir'),
+        RPM::expand_macro('%_srcrpmdir'),
+    );
+    return @results;
 }
 
 # RPM unfortunatly export this subroutine as a function

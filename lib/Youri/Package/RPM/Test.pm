@@ -1,4 +1,4 @@
-# $Id: Test.pm 2276 2011-01-22 10:21:48Z guillomovitch $
+# $Id: Test.pm 2370 2013-01-03 19:26:49Z guillomovitch $
 package Youri::Package::RPM::Test;
 
 =head1 NAME
@@ -14,15 +14,16 @@ purposes.
 
 use strict;
 use warnings;
-use File::Basename;
-use Carp;
-use URPM;
 use base 'Youri::Package::RPM';
 use feature qw(switch);
 use overload
     '""'     => 'as_string',
     '0+'     => '_to_number',
     fallback => 1;
+
+use Carp;
+use File::Basename;
+use URPM;
 
 our $AUTOLOAD;
 

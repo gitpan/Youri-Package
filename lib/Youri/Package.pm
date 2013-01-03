@@ -1,4 +1,4 @@
-# $Id: Package.pm 2307 2011-01-22 12:46:41Z guillomovitch $
+# $Id: Package.pm 2372 2013-01-03 19:27:58Z guillomovitch $
 package Youri::Package;
 
 =head1 NAME
@@ -11,10 +11,11 @@ This abstract class defines Youri::Package interface.
 
 =cut
 
-use Carp;
 use strict;
 use warnings;
-use version; our $VERSION = qv('0.2.0');
+use version; our $VERSION = qv('0.2.3');
+
+use Carp;
 
 =head1 CLASS METHODS
 
